@@ -7,7 +7,8 @@ Reads the CSV data file and return the dataframe, hosts and viruses.
 function getData()
 
     # Reading the data file
-    df = CSV.read("./data/virionette.csv");
+    #df = CSV.read("./data/virionette.csv");
+    df = CSV.read("./data/TestData.csv");
 
     # Make a sorted list of unique hosts and viruses
     hosts = sort(unique(df.host_species))
@@ -16,10 +17,11 @@ function getData()
     return df, hosts, viruses
 end
 
+
 """
     buildInteractionMatrix()
 
-Prepares the interaction matrix
+Prepares the interaction matrix with initial data.
 """
 function buildInteractionMatrix()
 
@@ -35,17 +37,19 @@ function buildInteractionMatrix()
 
     # Visualizing the interactions
     heatmap(interaction_matrix, xlabel = "Hosts", ylabel = "Viruses",
-        c = :Greys, leg = false, frame = :box)
+        c = :Greys, leg = false, frame = :box, title = "Initial matrix")
 
     return interaction_matrix
 end
 
-"""
-    crossValidation(interaction_matrix, targetedValue, initialValue, rank = 3)
 
-Computes the imputation for a given matrix.
 """
-function crossValidation(targetedValue, initialValue, rank = 3)
+    crossValidation(interaction_matrix, targetedValue, initialValue, rank)
+
+Computes the imputation for a given matrix if the targeted value is 0
+Computes the leave one out validation for a given matrix if the targeted value is 1
+"""
+function crossValidation(targetedValue, initialValue, rank)
     interaction_matrix = buildInteractionMatrix()
     # Do the imputation for every targeted value
     positions_to_impute = findall(interaction_matrix .== targetedValue)
@@ -56,14 +60,15 @@ function crossValidation(targetedValue, initialValue, rank = 3)
             position, initialValue, rank)
     end
 
-    println("Targeted Value: $(targetedValue)", "Initial Value: $(initialValue)", "Rank: $(rank)")
-    println("$(sum(abs(interaction_matrix .- output_matrix))/length(interaction_matrix))%")
-
     # Visualizing the interactions
     heatmap(output_matrix, xlabel = "Hosts", ylabel = "Viruses",
-        c = :Greys, leg = false, frame = :box)
+        c = :Greys, leg = false, frame = :box, title = "Output matrix")
+
+    println("Targeted Value:$(targetedValue) ", "Initial Value:$(initialValue) ", "Rank:$(rank)")
+    #println("$((1.0-(sum(abs.(interaction_matrix .- output_matrix))/length(interaction_matrix))))%")
 
 end
+
 
 """
     lowrank(matrix, svd_rank)
@@ -79,13 +84,14 @@ function lowrank(matrix, svd_rank)
     return factorization.U * Diagonal(factorization.S) * factorization.Vt
 end
 
+
 """
     imputation(matrix, position, initialValue, rank; tolerance=1e-2, maxiter=50)
 
 This function returns the imputed value at a given position (expressed in
-CartesianCoordinates) in the matrix, seeded from a value i0. The imputation
+CartesianCoordinates) in the matrix, seeded from a value initialeValue. The imputation
 is done by iterating an SVD at a given rank, and stops when the iteration
-difference is smaller than the absolute tolerance, of after maxiter steps
+difference is smaller than the absolute tolerance, or after maxiter steps
 have been done.
 """
 function imputation(matrix, position, initialValue, rank; tolerance = 1e-2, maxiter = 50)
@@ -103,10 +109,4 @@ function imputation(matrix, position, initialValue, rank; tolerance = 1e-2, maxi
         iter ≥ maxiter && break
     end
     return matrix[position]
-end
-
-
-function LOO
-
-
 end
