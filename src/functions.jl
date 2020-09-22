@@ -8,7 +8,7 @@ function getData()
 
     # Reading the data file
     #df = CSV.read("./data/virionette.csv");
-    df = CSV.read("./data/TestData.csv");
+    df = CSV.read("./data/virionette.csv");
 
     # Make a sorted list of unique hosts and viruses
     hosts = sort(unique(df.host_species))
@@ -61,12 +61,12 @@ function crossValidation(targetedValue, initialValue, rank)
     end
 
     # Visualizing the interactions
-    heatmap(output_matrix, xlabel = "Hosts", ylabel = "Viruses",
-        c = :Greys, leg = false, frame = :box, title = "Output matrix")
+    heatmap(output_matrix, xlabel = "Hosts", ylabel = "Viruses", c = :Greys, leg = false, frame = :box, title = "Output matrix")
 
     println("Targeted Value:$(targetedValue) ", "Initial Value:$(initialValue) ", "Rank:$(rank)")
     #println("$((1.0-(sum(abs.(interaction_matrix .- output_matrix))/length(interaction_matrix))))%")
 
+    return(output_matrix)
 end
 
 
