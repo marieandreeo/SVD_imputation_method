@@ -96,3 +96,17 @@ function imputation(data, rank)
     #heatmap(new_data)
     return new_data[7,3]
 end
+
+
+# 1 technic to find top10
+matrix = [10 2 4 10; 7 9 12 3; 14 2 5 7]
+minValue = findmin(matrix)
+minValue[2]
+maxValues = zeros(5,3)
+maxValues[1] = minValue[1]
+maxValues[2] = minValue[2,1]
+for w in eachindex(matrix)
+    if matrix[w] > findmin(maxValues)[1]
+        maxValues[findmin(maxValues)[2]] = matrix[w]
+    end
+end

@@ -12,7 +12,6 @@ function getData()
     # Make a sorted list of unique hosts and viruses
     hosts = sort(unique(df.host_species))
     viruses = sort(unique(df.virus_genus))
-
     return df, hosts, viruses
 end
 
@@ -32,8 +31,7 @@ function buildInteractionMatrix()
         virus_idx = findfirst(viruses .== interaction.virus_genus)
         interaction_matrix[virus_idx, host_idx] = 1.0
     end
-
-    return interaction_matrix
+    return interaction_matrix, hosts, viruses
 end
 
 """
@@ -46,7 +44,7 @@ function crossValidation(targetedValue, initialValue, rank)
     println("Targeted Value: $(targetedValue) ",
         "Initial Value: $(initialValue) ", "Rank: $(rank)")
 
-    interaction_matrix = buildInteractionMatrix()
+    (interaction_matrix, hosts, viruses) = buildInteractionMatrix()
     # Do the imputation for every targeted value
     positions_to_impute = findall(interaction_matrix .== targetedValue)
     output_matrix = copy(interaction_matrix)
@@ -56,10 +54,11 @@ function crossValidation(targetedValue, initialValue, rank)
             position, initialValue, rank)
     end
     # Visualizing the interactions
-    display(plot(generateHeatmap("Initial Matrix", interaction_matrix),
+    display(plot(generateHeatmap("Initial Matrix \n(targeted value: $(targetedValue), rank: $(rank))", interaction_matrix),
         generateHeatmap("Output matrix", output_matrix,)))
 
     println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
+    getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses)
 end
 
 """
@@ -86,6 +85,7 @@ function imputation(matrix, position, initialValue, rank; tolerance = 1e-2, maxi
         # We stop if there are more than a set number of iterations
         iter ≥ maxiter && break
     end
+
     return tempMatrix[position]
 end
 
@@ -121,6 +121,32 @@ end
 Calculates the variation between two matrices.
 """
 function calculateVariation(initial_matrix, output_matrix)
+
     delta = sum(abs.(initial_matrix .- output_matrix))
+    println("calculatevariation")
     return round((delta/length(initial_matrix)) * 100, digits = 2);
+
+end
+
+"""
+    getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
+
+"""
+function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
+    minValue = findmin(output_matrix)
+    maxValues = CircularBuffer{Tuple{Float64,Int64,Int64}}(top)
+    push!(maxValues, (minValue[1],minValue[2][1],minValue[2][2]));
+    for r in 1:size(output_matrix,1)
+        for c in 1:size(output_matrix,2)
+            if initial_matrix[r,c] == 0 && occursin("beta", viruses[c]) && output_matrix[r,c] > findmin(maxValues)[1][1]
+                sort!(maxValues)
+                push!(maxValues, (output_matrix[r,c],r,c))
+            end
+        end
+    end
+    sort!(maxValues, rev=true)
+    println("The top $(top) predicted interactions are:")
+    for t in 1:top
+        println("Hosts: ", hosts[maxValues[t][2]], "  Viruses: ", viruses[maxValues[t][3]])
+    end
 end
