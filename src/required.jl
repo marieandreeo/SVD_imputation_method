@@ -5,3 +5,4 @@ using LinearAlgebra
 using Statistics
 using ProgressMeter
 using DataStructures
+using EcologicalNetworks

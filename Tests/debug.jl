@@ -110,3 +110,11 @@ for w in eachindex(matrix)
         maxValues[findmin(maxValues)[2]] = matrix[w]
     end
 end
+
+# how to calculate connectance (=mean)
+# Convert ones and zeros in boolean
+matrix_bool = convert(Array{Bool}, matrix .== 1)
+# Convert matrix in bipartite network
+B = BipartiteNetwork(matrix_bool)
+println(connectance(B))
+println(mean(matrix))

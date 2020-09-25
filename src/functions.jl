@@ -42,7 +42,7 @@ Computes the leave one out validation for a given matrix if the targeted value i
 """
 function crossValidation(targetedValue, initialValue, rank)
     println("Targeted Value: $(targetedValue) ",
-        "Initial Value: $(initialValue) ", "Rank: $(rank)")
+        "Initial Value: $(round(initialValue, digits=2)) ", "Rank: $(rank)")
 
     (interaction_matrix, hosts, viruses) = buildInteractionMatrix()
     # Do the imputation for every targeted value
@@ -123,7 +123,6 @@ Calculates the variation between two matrices.
 function calculateVariation(initial_matrix, output_matrix)
 
     delta = sum(abs.(initial_matrix .- output_matrix))
-    println("calculatevariation")
     return round((delta/length(initial_matrix)) * 100, digits = 2);
 
 end
@@ -131,22 +130,30 @@ end
 """
     getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
 
+Returns the imputed interactions with the highest probability of occurrence.
+
 """
 function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
     minValue = findmin(output_matrix)
+    #Creating a buffer to stock the maximum probability values and their indexes
     maxValues = CircularBuffer{Tuple{Float64,Int64,Int64}}(top)
+    # initializing the maximum value array to the minimum value
     push!(maxValues, (minValue[1],minValue[2][1],minValue[2][2]));
     for r in 1:size(output_matrix,1)
         for c in 1:size(output_matrix,2)
-            if initial_matrix[r,c] == 0 && occursin("beta", viruses[c]) && output_matrix[r,c] > findmin(maxValues)[1][1]
+            # making sure that the present interaction was initially missing, and is now a max
+            if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && output_matrix[r,c] > findmin(maxValues)[1][1]
+                # sorting the maximums
                 sort!(maxValues)
+                # adding the new value at the end of tthe array and overwriting the smallest one
                 push!(maxValues, (output_matrix[r,c],r,c))
             end
         end
     end
+    # sorting the array in decreasing order
     sort!(maxValues, rev=true)
     println("The top $(top) predicted interactions are:")
     for t in 1:top
-        println("Hosts: ", hosts[maxValues[t][2]], "  Viruses: ", viruses[maxValues[t][3]])
+        println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
 end
