@@ -7,6 +7,7 @@ function getData()
 
     # Reading the data file
     df = CSV.read("./data/virionette.csv");
+    df=df[df.host_order .== "Chiroptera",:]
     #df = CSV.read("./data/TestData.csv");
 
     # Make a sorted list of unique hosts and viruses
@@ -142,6 +143,7 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
     for r in 1:size(output_matrix,1)
         for c in 1:size(output_matrix,2)
             # making sure that the present interaction was initially missing, and is now a max
+            #if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && df.host_order == Chiroptera && output_matrix[r,c] > findmin(maxValues)[1][1]
             if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && output_matrix[r,c] > findmin(maxValues)[1][1]
                 # sorting the maximums
                 sort!(maxValues)
