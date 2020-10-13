@@ -7,7 +7,7 @@ function getData()
 
     # Reading the data file
     df = CSV.read("./data/virionette.csv");
-    df=df[df.host_order .== "Chiroptera",:]
+    #df=df[df.host_order .== "Chiroptera",:]
     #df = CSV.read("./data/TestData.csv");
 
     # Make a sorted list of unique hosts and viruses
@@ -32,7 +32,7 @@ function buildInteractionMatrix()
         virus_idx = findfirst(viruses .== interaction.virus_genus)
         interaction_matrix[virus_idx, host_idx] = 1.0
     end
-    return interaction_matrix, hosts, viruses
+    return interaction_matrix, hosts, viruses, df
 end
 
 """
@@ -45,7 +45,7 @@ function crossValidation(targetedValue, initialValue, rank)
     println("Targeted Value: $(targetedValue) ",
         "Initial Value: $(round(initialValue, digits=2)) ", "Rank: $(rank)")
 
-    (interaction_matrix, hosts, viruses) = buildInteractionMatrix()
+    (interaction_matrix, hosts, viruses, df) = buildInteractionMatrix()
     # Do the imputation for every targeted value
     positions_to_impute = findall(interaction_matrix .== targetedValue)
     output_matrix = copy(interaction_matrix)
@@ -59,7 +59,7 @@ function crossValidation(targetedValue, initialValue, rank)
         generateHeatmap("Output matrix", output_matrix,)))
 
     println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
-    getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses)
+    getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
 end
 
 """
@@ -134,7 +134,8 @@ end
 Returns the imputed interactions with the highest probability of occurrence.
 
 """
-function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
+function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, df)
+
     minValue = findmin(output_matrix)
     #Creating a buffer to stock the maximum probability values and their indexes
     maxValues = CircularBuffer{Tuple{Float64,Int64,Int64}}(top)
@@ -143,8 +144,8 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses)
     for r in 1:size(output_matrix,1)
         for c in 1:size(output_matrix,2)
             # making sure that the present interaction was initially missing, and is now a max
-            #if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && df.host_order == Chiroptera && output_matrix[r,c] > findmin(maxValues)[1][1]
-            if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && output_matrix[r,c] > findmin(maxValues)[1][1]
+            if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) &&  first(df[(df.host_species .== hosts[c]),:]).host_order == "Chiroptera" && output_matrix[r,c] > findmin(maxValues)[1][1]
+            #if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && output_matrix[r,c] > findmin(maxValues)[1][1]
                 # sorting the maximums
                 sort!(maxValues)
                 # adding the new value at the end of tthe array and overwriting the smallest one

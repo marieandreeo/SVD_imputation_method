@@ -2,7 +2,7 @@ include("./required.jl")
 include("./functions.jl")
 
 # Test the impuration with initial value = mean
-(matrix, hosts, viruses) = buildInteractionMatrix();
+(matrix, hosts, viruses, df) = buildInteractionMatrix();
 crossValidation(0.0, mean(matrix), 2);
 
 # Test LOO
