@@ -160,3 +160,11 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
         println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
 end
+
+"""
+
+"""
+
+function calculateInitialeValue
+
+end
