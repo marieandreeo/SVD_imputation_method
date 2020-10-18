@@ -168,3 +168,18 @@ end
 function calculateInitialeValue
 
 end
+
+
+"""
+
+"""
+
+function linearFilter(α, Y)
+    F = zeros(size(Y))
+    for i in 1:size(Y,1)
+        for j in 1:size(Y,2)
+            F[i,j] = (α[1]*Y[i,j]) + (α[2]/size(Y,1)*sum(Y[:,j])) + (α[3]/size(Y,2)*sum(Y[i,:])) + (α[4]/length(Y)*sum(Y))
+        end
+    end
+    return(F)
+end
