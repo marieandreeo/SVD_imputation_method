@@ -36,14 +36,15 @@ function buildInteractionMatrix()
 end
 
 """
-    crossValidation(interaction_matrix, targetedValue, initialValue, rank)
+    crossValidation(interaction_matrix, targetedValue, initialValueMatrix, rank)
 
 Computes the imputation for a given matrix if the targeted value is 0
 Computes the leave one out validation for a given matrix if the targeted value is 1
 """
-function crossValidation(targetedValue, initialValue, rank)
-    println("Targeted Value: $(targetedValue) ",
-        "Initial Value: $(round(initialValue, digits=2)) ", "Rank: $(rank)")
+function crossValidation(targetedValue, initialValueMatrix, rank)
+    #println("Targeted Value: $(targetedValue) ",
+        #"Initial Value: $(round(initialValueMatrix, digits=2)) ", "Rank: $(rank)")
+    println("Rank: $(rank)")
 
     (interaction_matrix, hosts, viruses, df) = buildInteractionMatrix()
     # Do the imputation for every targeted value
@@ -52,7 +53,7 @@ function crossValidation(targetedValue, initialValue, rank)
 
     @showprogress for position in positions_to_impute
         output_matrix[position] = imputation(interaction_matrix,
-            position, initialValue, rank)
+            position, initialValueMatrix, rank)
     end
     # Visualizing the interactions
     display(plot(generateHeatmap("Initial Matrix \n(targeted value: $(targetedValue), rank: $(rank))", interaction_matrix),
@@ -63,17 +64,17 @@ function crossValidation(targetedValue, initialValue, rank)
 end
 
 """
-    imputation(matrix, position, initialValue, rank; tolerance=1e-2, maxiter=50)
+    imputation(matrix, position, initialValueMatrix, rank; tolerance=1e-2, maxiter=50)
 
 This function returns the imputed value at a given position (expressed in
-CartesianCoordinates) in the matrix, seeded from a value initialeValue. The imputation
+CartesianCoordinates) in the matrix, seeded from a value in initialeValueMatrix. The imputation
 is done by iterating an SVD at a given rank, and stops when the iteration
 difference is smaller than the absolute tolerance, or after maxiter steps
 have been done.
 """
-function imputation(matrix, position, initialValue, rank; tolerance = 1e-2, maxiter = 50)
+function imputation(matrix, position, initialValueMatrix, rank; tolerance = 1e-2, maxiter = 50)
     tempMatrix = copy(matrix)
-    tempMatrix[position] = initialValue
+    tempMatrix[position] = initialValueMatrix[position]
     Δ = 1.0
     iter = 1
     while Δ > tolerance
@@ -165,8 +166,15 @@ end
 
 """
 
-function calculateInitialeValue
-
+function calculateInitialeValues(Y, α)
+    # Convert ones and zeros in boolean
+    matrix_bool = convert(Array{Bool}, Y.== 1)
+    # Convert matrix in bipartite network
+    B = BipartiteNetwork(matrix_bool)
+    # Apply the linear filter
+    F = linearfilter(B, α = α)
+    #return the adjacency matrix
+    return(F.A)
 end
 
 
@@ -174,7 +182,7 @@ end
 
 """
 
-function linearFilter(α, Y)
+function linearFilter(Y, α)
     F = zeros(size(Y))
     for i in 1:size(Y,1)
         for j in 1:size(Y,2)

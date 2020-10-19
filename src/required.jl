@@ -6,4 +6,3 @@ using Statistics
 using ProgressMeter
 using DataStructures
 using EcologicalNetworks
-using ImageFiltering
