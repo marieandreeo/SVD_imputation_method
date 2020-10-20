@@ -7,7 +7,6 @@ function getData()
 
     # Reading the data file
     df = CSV.read("./data/virionette.csv");
-    #df=df[df.host_order .== "Chiroptera",:]
     #df = CSV.read("./data/TestData.csv");
 
     # Make a sorted list of unique hosts and viruses
@@ -145,6 +144,7 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
     for r in 1:size(output_matrix,1)
         for c in 1:size(output_matrix,2)
             # making sure that the present interaction was initially missing, and is now a max
+            # selecting only the betacoronaviruses and bat hosts
             if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) &&  first(df[(df.host_species .== hosts[c]),:]).host_order == "Chiroptera" && output_matrix[r,c] > findmin(maxValues)[1][1]
             #if initial_matrix[r,c] == 0 && occursin("Betacoronavirus", viruses[r]) && output_matrix[r,c] > findmin(maxValues)[1][1]
                 # sorting the maximums
@@ -162,10 +162,12 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
     end
 end
 
-"""
 
 """
+    calculateInitialeValues(Y, α)
+Calculates the initial values to be attributed by linear filtering.
 
+"""
 function calculateInitialeValues(Y, α)
     # Convert ones and zeros in boolean
     matrix_bool = convert(Array{Bool}, Y.== 1)
@@ -175,19 +177,4 @@ function calculateInitialeValues(Y, α)
     F = linearfilter(B, α = α)
     #return the adjacency matrix
     return(F.A)
-end
-
-
-"""
-
-"""
-
-function linearFilter(Y, α)
-    F = zeros(size(Y))
-    for i in 1:size(Y,1)
-        for j in 1:size(Y,2)
-            F[i,j] = (α[1]*Y[i,j]) + (α[2]/size(Y,1)*sum(Y[:,j])) + (α[3]/size(Y,2)*sum(Y[i,:])) + (α[4]/length(Y)*sum(Y))
-        end
-    end
-    return(F)
 end

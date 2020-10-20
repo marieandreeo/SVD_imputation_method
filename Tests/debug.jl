@@ -118,3 +118,6 @@ matrix_bool = convert(Array{Bool}, matrix .== 1)
 B = BipartiteNetwork(matrix_bool)
 println(connectance(B))
 println(mean(matrix))
+
+# Selecting a subset of bat hosts
+df=df[df.host_order .== "Chiroptera",:]
