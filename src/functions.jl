@@ -40,7 +40,7 @@ end
 Computes the imputation for a given matrix if the targeted value is 0
 Computes the leave one out validation for a given matrix if the targeted value is 1
 """
-function crossValidation(targetedValue, initialValueMatrix, rank)
+function crossValidation(targetedValue, initialValueMatrix, α, rank, suspected_newData, unlikely_newData)
     #println("Targeted Value: $(targetedValue) ",
         #"Initial Value: $(round(initialValueMatrix, digits=2)) ", "Rank: $(rank)")
     println("Rank: $(rank)")
@@ -59,7 +59,8 @@ function crossValidation(targetedValue, initialValueMatrix, rank)
         generateHeatmap("Output matrix", output_matrix,)))
 
     println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
-    getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
+    top10 = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
+    generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
 end
 
 """
@@ -135,7 +136,6 @@ Returns the imputed interactions with the highest probability of occurrence.
 
 """
 function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, df)
-
     minValue = findmin(output_matrix)
     #Creating a buffer to stock the maximum probability values and their indexes
     maxValues = CircularBuffer{Tuple{Float64,Int64,Int64}}(top)
@@ -160,6 +160,7 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
     for t in 1:top
         println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
+    return(maxValues)
 end
 
 
@@ -177,4 +178,24 @@ function calculateInitialeValues(Y, α)
     F = linearfilter(B, α = α)
     #return the adjacency matrix
     return(F.A)
+end
+
+
+"""
+    generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
+"""
+
+function generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
+    suspected_count = 0;
+    unlikely_count = 0;
+    for i in 1:length(top10)
+        if findfirst(suspected -> suspected == top10[i], suspected_newData) != nothing
+            suspected_count += 1;
+        end
+        if findfirst(unlikely -> unlikely == top10[i], unlikely_newData) != nothing
+            unlikely_count += 1;
+        end
+    end
+    results = DataFrame(Rank = [rank], Alpha = [α], Suspected = [suspected_count], Unlikely = [unlikely_count])
+    CSV.write("Results.csv", results, append = true, delim =';')
 end
