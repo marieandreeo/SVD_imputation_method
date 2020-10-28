@@ -59,8 +59,8 @@ function crossValidation(targetedValue, initialValueMatrix, α, rank, suspected_
         generateHeatmap("Output matrix", output_matrix,)))
 
     println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
-    top10 = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
-    generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
+    maxValues = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
+    generateResultsTable(maxValues, α, rank, suspected_newData, unlikely_newData)
 end
 
 """
@@ -114,7 +114,6 @@ function generateHeatmap(title, matrix)
 
     return heatmap(matrix, xlabel = "Hosts", ylabel = "Viruses", c = :Greys,
         leg = true, frame = :box, title = title)
-
 end
 
 """
@@ -126,7 +125,6 @@ function calculateVariation(initial_matrix, output_matrix)
 
     delta = sum(abs.(initial_matrix .- output_matrix))
     return round((delta/length(initial_matrix)) * 100, digits = 2);
-
 end
 
 """
@@ -156,10 +154,14 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
     end
     # sorting the array in decreasing order
     sort!(maxValues, rev=true)
+    # Printing the top10 interactions
     println("The top $(top) predicted interactions are:")
     for t in 1:top
         println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
+    println("The highest scoring interaction is:")
+    println("Virus: ", viruses[maxValues[1][2]], "  Host: ", hosts[maxValues[1][3]], " With a Δ of: ", maxValues[1][1] - initial_matrix[maxValues[1][2],maxValues[1][3]])
+    # Returning the array containing the top10
     return(maxValues)
 end
 
@@ -183,6 +185,10 @@ end
 
 """
     generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
+
+Generates an automated results table containing the combinations of alphas and
+ranks, and the number of species predicted in the top10 that are also included
+in the new dataset.
 """
 
 function generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)

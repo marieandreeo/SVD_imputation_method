@@ -2,6 +2,7 @@ include("./required.jl")
 include("./functions.jl")
 
 # Test the imputation
+header = DataFrame(Rank = [], Alpha = [], Suspected = [], Unlikely = [])
 CSV.write("Results.csv", header, header = true, delim =';');
 α_list = [[0.0, 0.0, 0.0, 1.0], [0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 1.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
 rank_list = [1, 2, 3, 4, 5];
