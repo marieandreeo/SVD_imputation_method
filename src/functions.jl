@@ -35,7 +35,7 @@ function buildInteractionMatrix()
 end
 
 """
-    crossValidation(interaction_matrix, targetedValue, initialValueMatrix, rank)
+    crossValidation(interaction_matrix, targetedValue, initialValueMatrix, rank, suspected_newData, unlikely_newData)
 
 Computes the imputation for a given matrix if the targeted value is 0
 Computes the leave one out validation for a given matrix if the targeted value is 1
@@ -44,6 +44,7 @@ function crossValidation(targetedValue, initialValueMatrix, α, rank, suspected_
     #println("Targeted Value: $(targetedValue) ",
         #"Initial Value: $(round(initialValueMatrix, digits=2)) ", "Rank: $(rank)")
     println("Rank: $(rank)")
+    println("Alpha: $(α)")
 
     (interaction_matrix, hosts, viruses, df) = buildInteractionMatrix()
     # Do the imputation for every targeted value
@@ -57,8 +58,7 @@ function crossValidation(targetedValue, initialValueMatrix, α, rank, suspected_
     # Visualizing the interactions
     display(plot(generateHeatmap("Initial Matrix \n(targeted value: $(targetedValue), rank: $(rank))", interaction_matrix),
         generateHeatmap("Output matrix", output_matrix,)))
-
-    println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
+    #println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
     maxValues = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
     generateResultsTable(maxValues, α, rank, suspected_newData, unlikely_newData)
 end
@@ -157,7 +157,8 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
     # Printing the top10 interactions
     println("The top $(top) predicted interactions are:")
     for t in 1:top
-        println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
+        println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]])
+        #println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
     println("The highest scoring interaction is:")
     println("Virus: ", viruses[maxValues[1][2]], "  Host: ", hosts[maxValues[1][3]], " With a Δ of: ", maxValues[1][1] - initial_matrix[maxValues[1][2],maxValues[1][3]])
@@ -197,9 +198,11 @@ function generateResultsTable(top10, α, rank, suspected_newData, unlikely_newDa
     for i in 1:length(top10)
         if findfirst(suspected -> suspected == top10[i], suspected_newData) != nothing
             suspected_count += 1;
+            println("Suspected count", suspected_count)
         end
         if findfirst(unlikely -> unlikely == top10[i], unlikely_newData) != nothing
             unlikely_count += 1;
+            println("unlikely count", unlikely_count)
         end
     end
     results = DataFrame(Rank = [rank], Alpha = [α], Suspected = [suspected_count], Unlikely = [unlikely_count])
