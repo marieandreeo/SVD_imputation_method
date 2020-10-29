@@ -59,8 +59,8 @@ function crossValidation(targetedValue, initialValueMatrix, α, rank, suspected_
     display(plot(generateHeatmap("Initial Matrix \n(targeted value: $(targetedValue), rank: $(rank))", interaction_matrix),
         generateHeatmap("Output matrix", output_matrix,)))
     #println("Variation: $(calculateVariation(interaction_matrix, output_matrix))%")
-    maxValues = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
-    generateResultsTable(maxValues, α, rank, suspected_newData, unlikely_newData)
+    (maxValues, delta) = getTopInteractions(10, interaction_matrix, output_matrix, hosts, viruses, df)
+    generateResultsTable(maxValues, α, rank, suspected_newData, unlikely_newData, delta, hosts)
 end
 
 """
@@ -160,10 +160,12 @@ function getTopInteractions(top, initial_matrix, output_matrix, hosts, viruses, 
         println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]])
         #println("Virus: ", viruses[maxValues[t][2]], "  Host: ", hosts[maxValues[t][3]], " With: ", round(maxValues[t][1]*100, digits=1),"%")
     end
+    #Calculating the difference between the intial and finale value of the interaction with the highest score
+    delta = maxValues[1][1] - initial_matrix[maxValues[1][2],maxValues[1][3]];
     println("The highest scoring interaction is:")
-    println("Virus: ", viruses[maxValues[1][2]], "  Host: ", hosts[maxValues[1][3]], " With a Δ of: ", maxValues[1][1] - initial_matrix[maxValues[1][2],maxValues[1][3]])
+    println("Virus: ", viruses[maxValues[1][2]], "  Host: ", hosts[maxValues[1][3]], " With a Δ of: ", delta)
     # Returning the array containing the top10
-    return(maxValues)
+    return maxValues, delta
 end
 
 
@@ -192,19 +194,17 @@ ranks, and the number of species predicted in the top10 that are also included
 in the new dataset.
 """
 
-function generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData)
+function generateResultsTable(top10, α, rank, suspected_newData, unlikely_newData, delta, hosts)
     suspected_count = 0;
     unlikely_count = 0;
     for i in 1:length(top10)
-        if findfirst(suspected -> suspected == top10[i], suspected_newData) != nothing
+        if findfirst(suspected -> suspected == hosts[top10[i][3]], suspected_newData) != nothing
             suspected_count += 1;
-            println("Suspected count", suspected_count)
         end
-        if findfirst(unlikely -> unlikely == top10[i], unlikely_newData) != nothing
+        if findfirst(unlikely -> unlikely == hosts[top10[i][3]], unlikely_newData) != nothing
             unlikely_count += 1;
-            println("unlikely count", unlikely_count)
         end
     end
-    results = DataFrame(Rank = [rank], Alpha = [α], Suspected = [suspected_count], Unlikely = [unlikely_count])
+    results = DataFrame(Rank = [rank], Alpha = [α], Suspected = [suspected_count], Unlikely = [unlikely_count], Delta = [delta])
     CSV.write("Results.csv", results, append = true, delim =';')
 end

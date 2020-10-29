@@ -1,8 +1,8 @@
-include("./required.jl")
-include("./functions.jl")
+include("./src/required.jl")
+include("./src/functions.jl")
 
 # Test the imputation
-header_list = DataFrame(Rank = [], Alpha = [], Suspected = [], Unlikely = [])
+header_list = DataFrame(Rank = [], Alpha = [], Suspected = [], Unlikely = [], Delta = []);
 CSV.write("Results.csv", header_list, header = true, delim =';');
 α_list = [[0.0, 0.0, 0.0, 1.0], [0.0, 1.0, 1.0, 0.0], [0.0, 1.0, 1.0, 1.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
 rank_list = [1, 2, 3, 4, 5];
